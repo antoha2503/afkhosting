@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style/style.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Maven+Pro&family=Raleway:wght@200&display=swap" rel="stylesheet">
+    
+    <title>AFKHosting</title>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./script/script.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "/node_modules/three/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three'
+        import {GLTFLoader} from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js"
+        import {OrbitControls} from "./node_modules/three/examples/jsm/controls/OrbitControls.js"
+        window.onload = function(){
+            var scene, camera, render, loader;
+            var canvas = document.getElementById("canvas");
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(3,2,5);
+            render = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+            document.body.appendChild( render.domElement );
+            render.setSize(window.innerWidth, window.innerHeight);
+            render.setClearColor(new THREE.Color(0x1e1e1e));
+            render.shadowMap.enebled = true;
+            render.setPixelRatio(window.devicePixelRatio); 
+
+            loader = new GLTFLoader();            
+
+            //Добавления освещения
+            var Ambient_light = new THREE.AmbientLight({color:0xffffff});
+            Ambient_light.position.set( 0, 0, 30 );
+            scene.add(Ambient_light);
+            
+            var Point_light = new THREE.PointLight( 0xffffff, 5, 100 );
+            Point_light.position.set( 20, 10, 30 );
+            Point_light.castShadow = true;
+            scene.add( Point_light );
+
+            //Добавления пола
+            var floor_geometry = new THREE.PlaneGeometry(300,300);
+            var floor_materyal = new THREE.MeshPhongMaterial({shininess: 150, color: 0x1e1e1e});
+            var floor = new THREE.Mesh(floor_geometry, floor_materyal);
+            floor.rotation.x = -0.5 * Math.PI;
+            floor.position.set(0,-2.5,-10);
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            //Добавления 3Д моделей
+            var MySQL, server, ftp, apache, php;
+
+            loader.load('./model/server.glb', function(obj, material){
+                server = obj.scene;
+                scene.add( server );
+                server.castShadow = true;
+                server.receiveShadow = true;
+            }, undefined, function (err) {
+                console.error(err);
+            });
+                
+            loader.load('./model/ftp.glb', function(obj, material){
+                ftp = obj.scene;
+                scene.add( ftp );
+                ftp.position.set(-3,1,2); 
+                ftp.scale.set(0.5,0.5,0.5,);  
+                ftp.castShadow = true;
+                ftp.receiveShadow = true;
+                ftp.traverse((o) => {
+                    if (o.isMesh) {
+                        o.castShadow = true;
+                        o.receiveShadow = true;
+                    }
+                    });
+                });
+
+                loader.load('./model/apache.glb', function(obj, material){
+                apache = obj.scene;
+                scene.add( apache );
+                apache.position.set(3,1,2); 
+                apache.scale.set(0.4,0.4,0.4);  
+                apache.castShadow = true;
+                apache.receiveShadow = true;
+                apache.traverse((o) => {
+                    if (o.isMesh) {
+                        o.castShadow = true;
+                        o.receiveShadow = true;
+                    }
+                    });
+                });
+                
+                loader.load('./model/MySQL.glb', function(obj, material){
+                MySQL = obj.scene;
+                scene.add( MySQL );
+                MySQL.position.set(-2,1,-3); 
+                MySQL.scale.set(0.5,0.5,0.5,);  
+                MySQL.castShadow = true;
+                MySQL.receiveShadow = true;
+                MySQL.traverse((o) => {
+                    if (o.isMesh) {
+                        o.castShadow = true;
+                        o.receiveShadow = true;
+                    }
+                    });
+                });
+
+                loader.load('./model/php.glb', function(obj, material){
+                php = obj.scene;
+                scene.add( php );
+                php.position.set(2,1,-3); 
+                php.scale.set(0.4,0.4,0.4);  
+                php.castShadow = true;
+                php.receiveShadow = true;
+                php.traverse((o) => {
+                    if (o.isMesh) {
+                        o.castShadow = true;
+                        o.receiveShadow = true;
+                    }
+                    });
+                });
+
+            //Добавления сферы
+            var shpera_geo = new THREE.SphereGeometry(1, 32,32);
+            var shpera_mater = new THREE.MeshPhongMaterial({color:0xff00ff, shininess: 50});
+            var shpare = new THREE.Mesh(shpera_geo, shpera_mater);
+            //scene.add(shpare);
+            shpare.lookAt(0,0,0);
+            shpare.position.set(3,1,0);
+            shpare.lookAt(new THREE.Vector3(0, 0, 0));
+            
+            //Функция вращения обькт вогруг заданого обьекта
+            var rotateAroundWorldAxis = function(object, axis, radians) {
+                var rotWorldMatrix = new THREE.Matrix4();
+                rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+                var currentPos = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+                var newPos = currentPos.applyMatrix4(rotWorldMatrix);
+
+                rotWorldMatrix.multiply(object.matrix);
+                object.matrix = rotWorldMatrix;
+                object.rotation.setFromRotationMatrix(object.matrix);
+
+                object.position.x = newPos.x;
+                object.position.y = newPos.y;
+                object.position.z = newPos.z;
+                
+                //Рисуем линию
+                var material = new THREE.LineBasicMaterial({color: 0x0000ff});
+                var line_points = [];
+                line_points.push(new THREE.Vector3( 0, 0, 0 ));
+                line_points.push(new THREE.Vector3( newPos.x,newPos.y,newPos.z ));
+                
+                var line_geometry = new THREE.BufferGeometry().setFromPoints(line_points);
+                var line = new THREE.Line( line_geometry, material );
+                //scene.add( line );
+                //console.log(line.length)
+            };
+
+            //Рисуем линию
+            var line_points = [];
+            var draw_line = function (object) {
+                var line_positionX = object.position.x, 
+                    line_positionY = object.position.y, 
+                    line_positionZ = object.position.z;
+                var material = new THREE.LineBasicMaterial({color: 0x0000ff});
+                
+                line_points.push(new THREE.Vector3( 0, 0, 0 ));
+                line_points.push(new THREE.Vector3( line_positionX, line_positionY, line_positionZ ));
+                
+                var line_geometry = new THREE.BufferGeometry().setFromPoints(line_points);
+                var line = new THREE.Line( line_geometry, material );
+                scene.add( line );      
+            }
+
+            //Добавим свечения 
+            // var spriteMaterial = new THREE.SpriteMaterial( 
+            // { 
+            //     map: new THREE.TextureLoader().load( './img/glow.png' ), 
+            //     useScreenCoordinates: false,
+            //     color: 0x0000ff, transparent: true, blending: THREE.AdditiveBlending
+            // });
+            // var sprite = new THREE.Sprite( spriteMaterial );
+            // sprite.position.set(0.75,0,0);
+            // sprite.scale.set(7, 7, 1.0);
+            //shpare.add(sprite); 
+
+            //Добавления управления камерой (Контрол)
+            var control = new OrbitControls(camera, render.domElement);
+            control.enableDamping = true;
+            control.dampingFactor = 1;
+            
+            control.screenSpacePanning = true;
+           
+            //При изменения размера экрана
+            window.addEventListener( 'resize', onWindowResize );
+			function onWindowResize() {
+                
+                let bg_block = document.getElementById('bg_block');
+                bg_block.style.width = window.innerWidth;
+                bg_block.style.height = window.innerHeight;
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				render.setSize( window.innerWidth, window.innerHeight );
+			}
+
+            var star_but = document.getElementsByClassName('star_but')[0];
+            
+            function render_animate(){
+                requestAnimationFrame(render_animate);
+                render.render(scene, camera);
+                control.update(); 
+                
+                camera.lookAt( scene.position );
+                
+                rotateAroundWorldAxis(apache, new THREE.Vector3(0.5,5,0.5), Math.PI/200);
+                rotateAroundWorldAxis(MySQL, new THREE.Vector3(0.5,5,0.5), Math.PI/200);
+                rotateAroundWorldAxis(ftp, new THREE.Vector3(0.5,5,0.5), Math.PI/200);   
+                rotateAroundWorldAxis(php, new THREE.Vector3(0.5,5,0.5), Math.PI/200);   
+
+                star_but.addEventListener("click", function(){
+                    //ftp.position.set(2,1,-3); 
+                    //camera.position.set(0,0,7);
+                });    
+                
+            }
+            render_animate();
+            console.log("It is OK");
+        }
+    </script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <section id="bg_block">
+        <div class="index_title">
+            <h1>AFK<span style="color: #fff;">Hosting</span></h1>
+            <p>
+                <ul class="list_tech">
+                    <li>Apache</li>
+                    <li>MySQL</li>
+                    <li>FTP</li>
+                    <li>PHP</li>
+                </ul>
+            </p>
+            <button class="star_but" title="Узнать больше о хостинге">Хочу хостинг</button>
+        </div>
+    </section>
+    <section id="wrapper">
+        <div class="wrapper">
+            <div class="head_wrapper">
+                <div class="back_hide" title="Спраятать панель">>></div>
+                <div class="titile_wrapper"><p title="Наш товар">Наш товар</p></div>
+            </div>
+            <hr noshade="noshade" color="#2e2e2e" size="1" width="100%">
+            <div class="wrapper_block">
+            <div class="info_product context_wraper" data-title="Наши товар">
+                <ul class="product">
+                    <li><p class="name_product">Apache</p>  
+                        <div class="discription_product">Версии:<b> 2.4.46 / 2.0 </b></div> 
+                    </li>
+                    <li><p class="name_product">MySQL</p> 
+                        <div class="discription_product">Версии: <b> 8.0.30 / 5.1.66 </b></div> 
+                    </li>
+                    <li><p class="name_product">FTP</p> 
+                        <div class="discription_product">Версии: <b>- </b></div> 
+                    </li>
+                    <li><p class="name_product">PHP</p> 
+                        <div class="discription_product">Версии: <b> 8.1.11 / 8.0.24 / 7.4.32 </b></div> 
+                    </li>
+                </ul>
+            </div>
+            <div class="favorit_prodect context_wraper" data-title="Наши приемущества">
+                <div class="list_favorit_prodect">
+                    <div class="item_favorit_prodect">
+                        <p>Надежность</p>
+                    </div>
+                    <div class="item_favorit_prodect">
+                        <p>Скорость</p>
+                    </div>
+                    <div class="item_favorit_prodect">
+                        <p>Гарантии</p>
+                    </div>
+                    <div class="item_favorit_prodect">
+                        <p>Поддержка</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
